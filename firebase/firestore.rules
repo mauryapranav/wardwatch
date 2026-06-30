@@ -1,0 +1,185 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ───────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isPhoneVerified() {
+      return request.auth.token.phone_verified == true;
+    }
+
+    function hasRole(role) {
+      return request.auth.token.role == role;
+    }
+
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+
+    function isSystemAgent() {
+      return request.auth.token.system_agent == true;
+    }
+
+    function isCampaignMember(campaignId) {
+      return exists(/databases/$(database)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+    }
+
+    function isAssignedToCampaign(campaignId) {
+      return get(/databases/$(database)/documents/campaigns/$(campaignId)).data.assigned_to == request.auth.uid;
+    }
+
+    function isOfficialForWard(wardId) {
+      return request.auth.token.ward_id == wardId && hasRole('official');
+    }
+
+    function isValidIssueType(type) {
+      return type in ['pothole', 'streetlight', 'water', 'garbage', 'sidewalk', 'other'];
+    }
+
+    function isValidStatus(status) {
+      return status in ['open', 'acknowledged_pending', 'acknowledged', 'in_progress', 'resolved', 'verifying', 'closed', 'reopened', 'request_more_info'];
+    }
+
+    function isValidSeverity(severity) {
+      return severity is int && severity >= 1 && severity <= 5;
+    }
+
+    // ─── Users ──────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin() || isSystemAgent());
+      allow delete: if isAdmin();
+    }
+
+    // ─── Campaigns ──────────────────────────────────────────────────────────
+    match /campaigns/{campaignId} {
+      // GET single campaign: member, assigned official, or admin only
+      allow get: if isAuthenticated() && (
+        isCampaignMember(campaignId)
+        || isAssignedToCampaign(campaignId)
+        || isAdmin()
+      );
+      // LIST (discovery): any authenticated user (backend API handles filtering)
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && isPhoneVerified()
+        && request.resource.data.founder_id == request.auth.uid
+        && isValidIssueType(request.resource.data.issue_type)
+        && isValidSeverity(request.resource.data.severity)
+        && request.resource.data.status == 'open'
+        && request.resource.data.title is string
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500;
+      allow update: if isAuthenticated() && (
+        isAssignedToCampaign(campaignId)
+        || isAdmin()
+        || isSystemAgent()
+        || (isCampaignMember(campaignId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['citizen_count', 'timeline']))
+      );
+      allow delete: if isAdmin();
+
+      // Campaign Members subcollection
+      match /members/{memberId} {
+        allow read: if isAuthenticated() && isCampaignMember(campaignId);
+        allow create: if isAuthenticated()
+          && isPhoneVerified()
+          && isOwner(memberId)
+          && request.resource.data.joined_at == request.time
+          && request.resource.data.role in ['founder', 'member'];
+        allow update: if isAdmin() || isSystemAgent();
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ─── Photos ─────────────────────────────────────────────────────────────
+    match /photos/{photoId} {
+      allow read: if isAuthenticated() && (
+        isCampaignMember(resource.data.campaign_id)
+        || isAdmin()
+        || isSystemAgent()
+      );
+      allow create: if isAuthenticated()
+        && isPhoneVerified()
+        && request.resource.data.uploader_id == request.auth.uid;
+      allow update: if isSystemAgent() || isAdmin();
+      allow delete: if isAdmin() || isSystemAgent();
+    }
+
+    // ─── Officials ──────────────────────────────────────────────────────────
+    match /officials/{officialId} {
+      allow read: if isAuthenticated() && (isOwner(officialId) || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isSystemAgent();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Ward Scores ─────────────────────────────────────────────────────────
+    match /ward_scores/{wardId} {
+      allow read: if true;  // public read for leaderboard
+      allow create: if isAdmin() || isSystemAgent();
+      allow update: if isAdmin() || isSystemAgent();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Leaderboard ─────────────────────────────────────────────────────────
+    match /leaderboard/{docId} {
+      allow read: if true;  // public read
+      allow create: if isAdmin() || isSystemAgent();
+      allow update: if isAdmin() || isSystemAgent();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Consent Records ─────────────────────────────────────────────────────
+    match /consent/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAdmin();
+    }
+
+    // ─── Audit Logs ──────────────────────────────────────────────────────────
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() || isSystemAgent();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ─── Escalation Log ──────────────────────────────────────────────────────
+    match /escalation_log/{logId} {
+      allow read: if isAuthenticated() && (
+        isAdmin()
+        || isSystemAgent()
+        || (hasRole('official') && resource.data.official_id == request.auth.uid)
+      );
+      allow create: if isSystemAgent() || isAdmin();
+      allow update: if isSystemAgent() || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Email Log ───────────────────────────────────────────────────────────
+    match /email_log/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSystemAgent() || isAdmin();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ─── Wards ───────────────────────────────────────────────────────────────
+    match /wards/{wardId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isSystemAgent();
+      allow delete: if isAdmin();
+    }
+  }
+}

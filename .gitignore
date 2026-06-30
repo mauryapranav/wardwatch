@@ -1,0 +1,53 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Service accounts
+service-account.json
+*service-account*.json
+
+# Firebase
+.firebase/
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
+
+# Build outputs
+mobile/build/
+portal/dist/
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flutter
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/pubspec.lock
+
+# Node
+functions/node_modules/
+functions/package-lock.json
+portal/node_modules/
+portal/package-lock.json
+
+# Python
+api/venv/
+api/__pycache__/
+api/.env
+
+# AI and docs
+*.md
+.agents/
+.gemini/
+brain/

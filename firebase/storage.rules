@@ -1,0 +1,71 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Helper Functions ────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isImageType() {
+      return request.resource.contentType.matches('image/jpeg')
+        || request.resource.contentType.matches('image/png')
+        || request.resource.contentType.matches('image/webp');
+    }
+
+    function isUnder10MB() {
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    function isSystemAgent() {
+      return request.auth.token.system_agent == true;
+    }
+
+    function isCampaignMember(campaignId) {
+      return firestore.exists(/databases/(default)/documents/campaigns/$(campaignId)/members/$(request.auth.uid));
+    }
+
+    // ─── Public assets ───────────────────────────────────────────────────────
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // ─── Campaign photos ─────────────────────────────────────────────────────
+    match /campaigns/{campaignId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (
+        isCampaignMember(campaignId)
+        || isSystemAgent()
+        || request.auth.token.admin == true
+      );
+      allow create: if isAuthenticated()
+        && isImageType()
+        && isUnder10MB()
+        && isCampaignMember(campaignId)
+        && request.auth.uid != null;
+      allow update: if isSystemAgent() || request.auth.token.admin == true;
+      allow delete: if isSystemAgent() || request.auth.token.admin == true;
+    }
+
+    // ─── Temp uploads ────────────────────────────────────────────────────────
+    match /campaigns/temp/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated()
+        && isOwner(userId)
+        && isImageType()
+        && isUnder10MB();
+      allow update: if isSystemAgent();
+      allow delete: if isAuthenticated() && (isOwner(userId) || isSystemAgent());
+    }
+
+    // ─── AI analysis data ────────────────────────────────────────────────────
+    match /ai_analysis/{allPaths=**} {
+      allow read: if isSystemAgent() || request.auth.token.admin == true;
+      allow write: if isSystemAgent() || request.auth.token.admin == true;
+    }
+  }
+}

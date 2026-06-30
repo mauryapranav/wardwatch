@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WardWatch - Official Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      line-height: 1.6;
+    }
+    .header {
+      background: #1565C0;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .logo { font-size: 1.5rem; font-weight: 700; }
+    .user-info { font-size: 0.9rem; opacity: 0.9; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .stat-value { font-size: 2rem; font-weight: 700; color: #1565C0; }
+    .stat-label { font-size: 0.9rem; color: #666; margin-top: 0.5rem; }
+    .filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 0.5rem 1.2rem;
+      border: 2px solid #1565C0;
+      background: transparent;
+      color: #1565C0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: #1565C0;
+      color: white;
+    }
+    .campaigns-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+    .campaign-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border-left: 4px solid #ccc;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .campaign-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .campaign-card.status-open { border-left-color: #FF9800; }
+    .campaign-card.status-acknowledged { border-left-color: #2196F3; }
+    .campaign-card.status-in_progress { border-left-color: #9C27B0; }
+    .campaign-card.status-resolved { border-left-color: #4CAF50; }
+    .campaign-card.status-verifying { border-left-color: #00BCD4; }
+    .campaign-card.status-escalated { border-left-color: #F44336; }
+    .campaign-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 0.8rem;
+    }
+    .campaign-title { font-size: 1.1rem; font-weight: 600; color: #222; }
+    .status-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-badge.open { background: #FFF3E0; color: #E65100; }
+    .status-badge.acknowledged { background: #E3F2FD; color: #1565C0; }
+    .status-badge.in_progress { background: #F3E5F5; color: #7B1FA2; }
+    .status-badge.resolved { background: #E8F5E9; color: #2E7D32; }
+    .status-badge.verifying { background: #E0F7FA; color: #00838F; }
+    .status-badge.escalated { background: #FFEBEE; color: #C62828; }
+    .campaign-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .meta-item { display: flex; align-items: center; gap: 0.3rem; }
+    .meta-icon { font-size: 1rem; }
+    .campaign-description {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .campaign-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+    .citizen-count {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-weight: 600;
+      color: #1565C0;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #1565C0;
+      color: white;
+    }
+    .btn-primary:hover { background: #0D47A1; }
+    .btn-success {
+      background: #4CAF50;
+      color: white;
+    }
+    .btn-success:hover { background: #388E3C; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #ccc;
+      color: #666;
+    }
+    .btn-outline:hover { background: #f5f5f5; }
+    .leaderboard-section {
+      margin-top: 3rem;
+    }
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #222;
+    }
+    .leaderboard-table {
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .leaderboard-table th {
+      background: #1565C0;
+      color: white;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 500;
+    }
+    .leaderboard-table td {
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+    }
+    .leaderboard-table tr:last-child td { border-bottom: none; }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .rank-1 { background: #FFD700; color: #333; }
+    .rank-2 { background: #C0C0C0; color: #333; }
+    .rank-3 { background: #CD7F32; color: white; }
+    .resolution-bar {
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .resolution-bar-fill {
+      height: 100%;
+      background: #4CAF50;
+      border-radius: 4px;
+    }
+    .login-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .login-card {
+      background: white;
+      padding: 2.5rem;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .login-subtitle { color: #666; margin-bottom: 2rem; }
+    .login-input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s;
+    }
+    .login-input:focus {
+      outline: none;
+      border-color: #1565C0;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 0.8rem;
+      background: #1565C0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-btn:hover { background: #0D47A1; }
+    .hidden { display: none !important; }
+    .timeline {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+    .timeline-item {
+      display: flex;
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
+      font-size: 0.85rem;
+    }
+    .timeline-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1565C0;
+      flex-shrink: 0;
+      margin-top: 0.3rem;
+    }
+    .timeline-content { color: #555; }
+    .timeline-time { color: #999; font-size: 0.8rem; }
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #333;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      animation: slideIn 0.3s ease;
+      z-index: 1001;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .toast.success { background: #4CAF50; }
+    .toast.error { background: #F44336; }
+    @media (max-width: 768px) {
+      .container { padding: 1rem; }
+      .campaigns-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-title">WardWatch Official Portal</div>
+    <div class="login-subtitle">Sign in to manage civic campaigns</div>
+    <input type="text" class="login-input" placeholder="Official ID (e.g., official-ward12-l1)" id="officialId">
+    <button class="login-btn" onclick="login()">Sign In</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="header">
+  <div class="logo">WardWatch</div>
+  <div class="user-info" id="userInfo">Official Portal</div>
+</div>
+
+<div class="container">
+  <!-- Stats -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-value" id="totalIssues">10</div>
+      <div class="stat-label">Total Issues</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="activeIssues">7</div>
+      <div class="stat-label">Active</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="resolvedIssues">1</div>
+      <div class="stat-label">Resolved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="citizensJoined">42</div>
+      <div class="stat-label">Citizens Joined</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <button class="filter-btn active" onclick="filterCampaigns('all')">All</button>
+    <button class="filter-btn" onclick="filterCampaigns('open')">Open</button>
+    <button class="filter-btn" onclick="filterCampaigns('acknowledged')">Acknowledged</button>
+    <button class="filter-btn" onclick="filterCampaigns('in_progress')">In Progress</button>
+    <button class="filter-btn" onclick="filterCampaigns('resolved')">Resolved</button>
+    <button class="filter-btn" onclick="filterCampaigns('verifying')">Verifying</button>
+    <button class="filter-btn" onclick="filterCampaigns('escalated')">Escalated</button>
+  </div>
+
+  <!-- Campaigns -->
+  <div class="campaigns-grid" id="campaignsGrid"></div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard-section">
+    <div class="section-title">Ward Performance Leaderboard</div>
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Ward</th>
+          <th>Total Issues</th>
+          <th>Resolved</th>
+          <th>Resolution Rate</th>
+          <th>Participation</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Mock data from seed_mock_data.py
+const campaigns = [
+  {
+    id: "campaign-4421",
+    title: "Deep Pothole Near Andheri Station Entrance",
+    description: "Large pothole (approx. 2ft wide) near the West exit of Andheri station. Causing accidents during rain.",
+    issue_type: "pothole",
+    severity: 4,
+    status: "acknowledged_pending",
+    ward_id: "ward-12",
+    address: "Andheri Station Road, Andheri East, Mumbai 400069",
+    citizen_count: 5,
+    assigned_to: "official-ward12-l1",
+    sla_deadline: "6 days",
+    created_at: "1 day ago",
+    timeline: [
+      { action: "created", actor: "citizen-priya", time: "1 day ago", notes: "Campaign created." },
+      { action: "threshold_met", actor: "system", time: "16 hours ago", notes: "3 citizens reached. SLA started." },
+      { action: "routing_drafted", actor: "system", time: "15 hours ago", notes: "Routing draft created for Ward Engineer Suresh Patil." }
+    ]
+  },
+  {
+    id: "campaign-3312",
+    title: "Streetlight Out on Saki Naka Junction",
+    description: "3 consecutive streetlights not working on Saki Naka junction since past 2 weeks. Dangerous at night.",
+    issue_type: "streetlight",
+    severity: 3,
+    status: "in_progress",
+    ward_id: "ward-12",
+    address: "Saki Naka Junction, Andheri East, Mumbai 400072",
+    citizen_count: 8,
+    assigned_to: "official-ward12-l1",
+    sla_deadline: "2 days",
+    created_at: "5 days ago",
+    timeline: [
+      { action: "created", actor: "citizen-vikram", time: "5 days ago", notes: "Campaign created." },
+      { action: "status_updated", actor: "official-ward12-l1", time: "3 days ago", notes: "Work order issued. Electrician team deployed." }
+    ]
+  },
+  {
+    id: "campaign-2201",
+    title: "Water Pipe Burst \u2014 Marol Naka",
+    description: "Underground water pipe burst. Road flooded. Water supply affected for 200 households.",
+    issue_type: "water",
+    severity: 5,
+    status: "closed",
+    ward_id: "ward-12",
+    address: "Marol Naka, Andheri East, Mumbai 400059",
+    citizen_count: 15,
+    assigned_to: "official-ward12-l1",
+    created_at: "12 days ago",
+    timeline: [
+      { action: "created", actor: "citizen-arjun", time: "12 days ago", notes: "Campaign created." },
+      { action: "status_updated", actor: "official-ward12-l1", time: "4 days ago", notes: "Pipe repaired. Road restored." },
+      { action: "verified_and_closed", actor: "system", time: "1 day ago", notes: "Citizen verification passed. Approval rate: 87%." }
+    ]
+  },
+  {
+    id: "campaign-5501",
+    title: "Garbage Overflowing at Hill Road Market",
+    description: "Municipal bins at Hill Road market not collected for 4 days. Severe stench. Health hazard.",
+    issue_type: "garbage",
+    severity: 4,
+    status: "open",
+    ward_id: "ward-8",
+    address: "Hill Road Market, Bandra West, Mumbai 400050",
+    citizen_count: 2,
+    assigned_to: null,
+    created_at: "6 hours ago",
+    timeline: [
+      { action: "created", actor: "citizen-kavya", time: "6 hours ago", notes: "Campaign created." }
+    ]
+  },
+  {
+    id: "campaign-4890",
+    title: "Broken Sidewalk \u2014 Linking Road",
+    description: "Sidewalk tiles broken and uplifted near Linking Road. Elderly and differently-abled citizens at risk.",
+    issue_type: "sidewalk",
+    severity: 3,
+    status: "acknowledged",
+    ward_id: "ward-8",
+    address: "Linking Road, Bandra West, Mumbai 400050",
+    citizen_count: 4,
+    assigned_to: "official-ward8-l1",
+    sla_deadline: "4 days",
+    created_at: "3 days ago",
+    timeline: [
+      { action: "created", actor: "citizen-mohit", time: "3 days ago", notes: "Campaign created." },
+      { action: "status_updated", actor: "official-ward8-l1", time: "1 day ago", notes: "Issue logged. Repair scheduled for next week." }
+    ]
+  },
+  {
+    id: "campaign-6600",
+    title: "Pothole Crater on Turner Road",
+    description: "Massive pothole on Turner Road that has claimed two bicycles and caused vehicle damage.",
+    issue_type: "pothole",
+    severity: 5,
+    status: "escalated",
+    ward_id: "ward-8",
+    address: "Turner Road, Bandra West, Mumbai 400050",
+    citizen_count: 20,
+    assigned_to: "official-ward8-l2",
+    sla_deadline: "1 day 3 hours",
+    created_at: "16 days ago",
+    timeline: [
+      { action: "created", actor: "citizen-rahul", time: "16 days ago", notes: "Campaign created." },
+      { action: "escalated", actor: "system", time: "9 days ago", notes: "SLA breached. Escalated to Level 2 (Zonal Officer)." }
+    ]
+  },
+  {
+    id: "campaign-7701",
+    title: "Streetlight Failure \u2014 Juhu Beach Road",
+    description: "8 streetlights non-functional on Juhu Beach Road. Dark road attracts anti-social activity.",
+    issue_type: "streetlight",
+    severity: 3,
+    status: "verifying",
+    ward_id: "ward-15",
+    address: "Juhu Beach Road, Juhu, Mumbai 400049",
+    citizen_count: 6,
+    assigned_to: "official-ward15-l1",
+    created_at: "10 days ago",
+    timeline: [
+      { action: "created", actor: "citizen-aisha", time: "10 days ago", notes: "Campaign created." },
+      { action: "status_updated", actor: "official-ward15-l1", time: "5 days ago", notes: "Lights repaired. Verification requested." }
+    ]
+  },
+  {
+    id: "campaign-8801",
+    title: "Illegal Dumping at JVPD Scheme",
+    description: "Construction debris illegally dumped in JVPD Scheme park area. Blocking pedestrian access.",
+    issue_type: "garbage",
+    severity: 2,
+    status: "open",
+    ward_id: "ward-15",
+    address: "JVPD Scheme, Juhu, Mumbai 400049",
+    citizen_count: 1,
+    assigned_to: null,
+    created_at: "2 hours ago",
+    timeline: [
+      { action: "created", actor: "citizen-divya", time: "2 hours ago", notes: "Campaign created." }
+    ]
+  },
+  {
+    id: "campaign-9910",
+    title: "Burst Water Pipe \u2014 Gulmohar Road",
+    description: "Burst pipe flooding the road. 3 lanes blocked. Over 500 households without water.",
+    issue_type: "water",
+    severity: 5,
+    status: "in_progress",
+    ward_id: "ward-15",
+    address: "Gulmohar Road, Juhu, Mumbai 400049",
+    citizen_count: 12,
+    assigned_to: "official-ward15-l1",
+    sla_deadline: "3 days",
+    created_at: "4 days ago",
+    timeline: [
+      { action: "created", actor: "citizen-arjun", time: "4 days ago", notes: "Campaign created." },
+      { action: "mass_issue_flagged", actor: "system", time: "3 days ago", notes: "12 citizens \u2014 flagged as mass issue." },
+      { action: "status_updated", actor: "official-ward15-l1", time: "2 days ago", notes: "Hydraulic team deployed. Expected resolution in 2 days." }
+    ]
+  },
+  {
+    id: "campaign-0011",
+    title: "Pothole Cluster \u2014 Versova Road",
+    description: "Cluster of 5-6 potholes on Versova Road near fishing village. Motorcyclists are injured frequently.",
+    issue_type: "pothole",
+    severity: 4,
+    status: "reopened",
+    ward_id: "ward-15",
+    address: "Versova Road, Juhu, Mumbai 400061",
+    citizen_count: 7,
+    assigned_to: "official-ward15-l2",
+    sla_deadline: "18 hours",
+    created_at: "21 days ago",
+    timeline: [
+      { action: "created", actor: "citizen-mohit", time: "21 days ago", notes: "Campaign created." },
+      { action: "status_updated", actor: "official-ward15-l1", time: "10 days ago", notes: "Marked resolved." },
+      { action: "verification_failed", actor: "system", time: "7 days ago", notes: "Citizen verification failed. Approval rate: 28%. Reopened." },
+      { action: "escalated", actor: "system", time: "7 days ago", notes: "Escalated to Level 2: Zonal Officer Sunita Reddy." }
+    ]
+  }
+];
+
+const leaderboardData = [
+  { rank: 1, ward: "Ward 12 \u2014 Andheri East", total: 3, resolved: 1, rate: 33, participation: 62 },
+  { rank: 2, ward: "Ward 8 \u2014 Bandra West", total: 3, resolved: 0, rate: 0, participation: 45 },
+  { rank: 3, ward: "Ward 15 \u2014 Juhu", total: 4, resolved: 0, rate: 0, participation: 38 }
+];
+
+let currentFilter = 'all';
+let currentOfficial = null;
+
+function login() {
+  const id = document.getElementById('officialId').value.trim();
+  if (!id) {
+    showToast('Please enter an Official ID', 'error');
+    return;
+  }
+  currentOfficial = id;
+  document.getElementById('loginOverlay').classList.add('hidden');
+  document.getElementById('userInfo').textContent = `Signed in as: ${id}`;
+  showToast('Successfully signed in!', 'success');
+  renderCampaigns();
+}
+
+function renderCampaigns() {
+  const grid = document.getElementById('campaignsGrid');
+  const filtered = currentFilter === 'all' 
+    ? campaigns 
+    : campaigns.filter(c => c.status === currentFilter);
+  
+  grid.innerHTML = filtered.map(c => `
+    <div class="campaign-card status-${c.status.replace('_', '-')}">
+      <div class="campaign-header">
+        <div class="campaign-title">${c.title}</div>
+        <div class="status-badge ${c.status}">${c.status.replace('_', ' ')}</div>
+      </div>
+      <div class="campaign-meta">
+        <div class="meta-item">
+          <span class="meta-icon">\ud83d\udccd</span>
+          <span>${c.ward_id}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">\u26a0\ufe0f</span>
+          <span>Severity ${c.severity}/5</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">\ud83d\udccd</span>
+          <span>${c.address}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">\u23f0</span>
+          <span>${c.sla_deadline || 'No SLA'}</span>
+        </div>
+      </div>
+      <div class="campaign-description">${c.description}</div>
+      <div class="timeline">
+        ${c.timeline.slice(0, 3).map(t => `
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div>
+              <div class="timeline-content">${t.action.replace('_', ' ')} \u2014 ${t.notes}</div>
+              <div class="timeline-time">${t.time}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="campaign-footer">
+        <div class="citizen-count">
+          <span>\ud83d\udc65</span>
+          <span>${c.citizen_count} citizens</span>
+        </div>
+        <div class="action-buttons">
+          ${getActionButtons(c)}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getActionButtons(campaign) {
+  const status = campaign.status;
+  if (status === 'open') {
+    return `<button class="btn btn-primary" onclick="updateStatus('${campaign.id}', 'acknowledged')">Acknowledge</button>`;
+  }
+  if (status === 'acknowledged' || status === 'acknowledged_pending') {
+    return `<button class="btn btn-primary" onclick="updateStatus('${campaign.id}', 'in_progress')">Start Work</button>`;
+  }
+  if (status === 'in_progress') {
+    return `<button class="btn btn-success" onclick="updateStatus('${campaign.id}', 'resolved')">Mark Resolved</button>`;
+  }
+  if (status === 'resolved') {
+    return `<button class="btn btn-outline" disabled>Verifying...</button>`;
+  }
+  if (status === 'verifying') {
+    return `<button class="btn btn-success" onclick="updateStatus('${campaign.id}', 'closed')">Verify & Close</button>`;
+  }
+  return `<button class="btn btn-outline" disabled>Closed</button>`;
+}
+
+function updateStatus(campaignId, newStatus) {
+  const campaign = campaigns.find(c => c.id === campaignId);
+  if (!campaign) return;
+  
+  const oldStatus = campaign.status;
+  campaign.status = newStatus;
+  
+  campaign.timeline.unshift({
+    action: 'status_updated',
+    actor: currentOfficial || 'official',
+    time: 'just now',
+    notes: `Status changed from ${oldStatus} to ${newStatus}`
+  });
+  
+  showToast(`Status updated to ${newStatus.replace('_', ' ')}`, 'success');
+  renderCampaigns();
+  updateStats();
+}
+
+function filterCampaigns(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  renderCampaigns();
+}
+
+function updateStats() {
+  const total = campaigns.length;
+  const active = campaigns.filter(c => !['closed', 'resolved'].includes(c.status)).length;
+  const resolved = campaigns.filter(c => c.status === 'closed').length;
+  const citizens = campaigns.reduce((sum, c) => sum + c.citizen_count, 0);
+  
+  document.getElementById('totalIssues').textContent = total;
+  document.getElementById('activeIssues').textContent = active;
+  document.getElementById('resolvedIssues').textContent = resolved;
+  document.getElementById('citizensJoined').textContent = citizens;
+}
+
+function renderLeaderboard() {
+  const tbody = document.getElementById('leaderboardBody');
+  tbody.innerHTML = leaderboardData.map(row => `
+    <tr>
+      <td><span class="rank-badge rank-${row.rank}">${row.rank}</span></td>
+      <td><strong>${row.ward}</strong></td>
+      <td>${row.total}</td>
+      <td>${row.resolved}</td>
+      <td>
+        <div class="resolution-bar">
+          <div class="resolution-bar-fill" style="width: ${row.rate}%"></div>
+        </div>
+        <span style="font-size: 0.8rem; color: #666;">${row.rate}%</span>
+      </td>
+      <td>${row.participation}%</td>
+    </tr>
+  `).join('');
+}
+
+function showToast(message, type) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// Initialize
+renderCampaigns();
+renderLeaderboard();
+updateStats();
+</script>
+
+</body>
+</html>
